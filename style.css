@@ -1,3 +1,7 @@
+@import "bulma/css/bulma.css";
+@import "toastify-js/src/toastify.css";
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+
 html,
 body {
     margin: 0;
@@ -37,7 +41,7 @@ footer {
     box-shadow: 0 0 10px #ECEFF1;
     padding: 0.25em;
     display: grid;
-    grid-template-areas: ". week""time content";
+    grid-template-areas: ". week" "time content";
     grid-template-columns: 120px;
     grid-template-rows: auto;
 }

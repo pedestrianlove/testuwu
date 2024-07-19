@@ -1,3 +1,16 @@
+import Toastify from "toastify-js";
+import { toPng } from "dom-to-image";
+import "../style.css";
+
+import {
+    APP_URL,
+    SEMESTER,
+    TIME_IDX,
+    TIME_MAPPING,
+    WEEK_MAPPING,
+    YEAR,
+} from "./config.js";
+
 let courseData = {};
 let depData = {};
 let selectedCourse = {};
@@ -5,32 +18,39 @@ let selectedDep = "0";
 
 // Safari sucks.
 
-const supportBigInt = typeof BigInt !== "undefined";
-if (!supportBigInt) BigInt = JSBI.BigInt;
+// const supportBigInt = typeof BigInt !== "undefined";
+// if (!supportBigInt) BigInt = JSBI.BigInt;
 
 function parseBigInt(value, radix = 36) {
-    const add = (a, b) => supportBigInt ? a + b : JSBI.add(a, b);
-    const mul = (a, b) => supportBigInt ? a * b : JSBI.multiply(a, b);
+    // const add = (a, b) => supportBigInt ? a + b : JSBI.add(a, b);
+    // const mul = (a, b) => supportBigInt ? a * b : JSBI.multiply(a, b);
+    // return [...value.toString()]
+    //     .reduce((r, v) =>
+    //         add(
+    //             mul(r, BigInt(radix)),
+    //             BigInt(parseInt(v, radix)),
+    //         ), BigInt(0));
     return [...value.toString()]
-        .reduce((r, v) =>
-            add(
-                mul(r, BigInt(radix)),
-                BigInt(parseInt(v, radix)),
-            ), BigInt(0));
+        .reduce(
+            (r, v) => r * BigInt(radix) + BigInt(parseInt(v, radix)),
+            BigInt(0),
+        );
 }
 
 function prependZeros(str) {
-    let remainder = str.length % 4;
+    const remainder = str.length % 4;
     if (remainder !== 0) {
-        let numberOfZeros = 4 - remainder;
-        str = '0'.repeat(numberOfZeros) + str;
+        const numberOfZeros = 4 - remainder;
+        str = "0".repeat(numberOfZeros) + str;
     }
     return str;
 }
 
 function loadFromShareLink() {
     const shareKey = new URLSearchParams(location.search).get("share");
-    const courseIds = prependZeros(parseBigInt(shareKey).toString()).match(/.{1,4}/g);
+    const courseIds = prependZeros(parseBigInt(shareKey).toString()).match(
+        /.{1,4}/g,
+    );
     return courseIds.reduce((a, b) => (a[b] = true, a), {});
 }
 
@@ -72,14 +92,17 @@ fetch(`course-data/${YEAR}${SEMESTER}-dep-data.json`)
     .then((r) => r.json())
     .then((data) => {
         depData = data;
-        const groupedDepartments = Object.entries(depData).reduce((acc, [key, value]) => {
-            const groupKey = value.college; // or any other attribute you want to group by
-            if (!acc[groupKey]) {
-                acc[groupKey] = [];
-            }
-            acc[groupKey].push({ key, value });
-            return acc;
-        }, {});
+        const groupedDepartments = Object.entries(depData).reduce(
+            (acc, [key, value]) => {
+                const groupKey = value.college; // or any other attribute you want to group by
+                if (!acc[groupKey]) {
+                    acc[groupKey] = [];
+                }
+                acc[groupKey].push({ key, value });
+                return acc;
+            },
+            {},
+        );
         Object.keys(groupedDepartments).forEach((college) => {
             const optGroup = document.createElement("optgroup");
             optGroup.label = college;
@@ -87,7 +110,9 @@ fetch(`course-data/${YEAR}${SEMESTER}-dep-data.json`)
                 const option = new Option(dep.value.name, dep.key);
                 optGroup.appendChild(option);
             });
-            document.querySelector("#department-dropdown").appendChild(optGroup);
+            document.querySelector("#department-dropdown").appendChild(
+                optGroup,
+            );
         });
     });
 
@@ -102,12 +127,13 @@ fetch(`course-data/${YEAR}${SEMESTER}-data.json`)
         document.querySelector("#search-bar").placeholder =
             "課號 / 課名 / 老師 / 備註";
         document.querySelector(".loading").classList.add("is-hidden");
-        for (courseId in selectedCourse) {
+        for (const courseId in selectedCourse) {
             const course = courseData[courseId];
             renderPeriodBlock(course);
             appendCourseElement(course);
         }
-        document.querySelector(".credits").textContent = `${totalCredits()} 學分`;
+        document.querySelector(".credits").textContent =
+            `${totalCredits()} 學分`;
     });
 
 function getCourseIdFromElement(element) {
@@ -118,7 +144,7 @@ function getDepartmentIdFromElement(element) {
     return element.closest("select").value;
 }
 
-document.addEventListener("click", function({ target }) {
+document.addEventListener("click", function ({ target }) {
     if (target.classList.contains("toggle-course")) {
         toggleCourse(getCourseIdFromElement(target));
     }
@@ -128,7 +154,7 @@ document.addEventListener("click", function({ target }) {
     }
 });
 
-document.addEventListener("mouseover", function(event) {
+document.addEventListener("mouseover", function (event) {
     if (event.target.matches(".result .course, .result .course *")) {
         const courseId = getCourseIdFromElement(event.target);
         const result = parseTime(courseData[courseId].time);
@@ -145,7 +171,7 @@ document.addEventListener("mouseover", function(event) {
     }
 });
 
-document.addEventListener("mouseout", function(event) {
+document.addEventListener("mouseout", function (event) {
     if (event.target.matches(".result .course, .result .course *")) {
         document.querySelectorAll(
             '.timetable>.content>[class="has-background-info-light"]',
@@ -194,7 +220,7 @@ function appendCourseElement(course, search = false) {
     template.content.getElementById("id-tag").textContent = course.id;
 
     // Set course block according to course type
-    let type_tag = template.content.getElementById("type-tag");
+    const type_tag = template.content.getElementById("type-tag");
     type_tag.textContent = course.type;
     type_tag.className = (course.type === "必修")
         ? "tag is-rounded is-danger"
@@ -245,14 +271,15 @@ function toggleCourse(courseId) {
 
         document.querySelector(`.selected [data-id="${courseId}"]`).remove();
         document.querySelectorAll(`.period[data-id="${courseId}"]`).forEach(
-            (elem) => elem.remove()
+            (elem) => elem.remove(),
         );
         button?.classList.remove("is-selected");
     } else { // Select course
         if (courseData[courseId].time === "無資料") {
             Toastify({
                 text: "此課程無上課時間資料，無法加入課表",
-                backgroundColor: "linear-gradient(147deg, #f71735 0%, #db3445 74%)",
+                backgroundColor:
+                    "linear-gradient(147deg, #f71735 0%, #db3445 74%)",
                 close: true,
                 duration: 3000,
             }).showToast();
@@ -265,7 +292,8 @@ function toggleCourse(courseId) {
         if (isConflict) {
             Toastify({
                 text: "和目前課程衝堂了欸",
-                backgroundColor: "linear-gradient(147deg, #f71735 0%, #db3445 74%)",
+                backgroundColor:
+                    "linear-gradient(147deg, #f71735 0%, #db3445 74%)",
                 close: true,
                 duration: 3000,
             }).showToast();
@@ -287,8 +315,10 @@ function parseTime(timeCode) {
         /[\u4E00\u4E8C\u4E09\u56DB\u4E94\u516D\u65E5]\/(([0-9]+)|([AB]))(\,(([0-9]+)|([AB])))*/g,
     );
 
-    return timeList.map(function(code) {
-        let time_arr = code.split("/")[1].split(",");
+    if (!timeList) return [];
+
+    return timeList.map(function (code) {
+        const time_arr = code.split("/")[1].split(",");
         return time_arr.map((time) => WEEK_MAPPING[code[0]] + time);
     }).flat();
 }
@@ -313,7 +343,7 @@ document.querySelector("#search-bar").oninput = (event) => {
     result.forEach((course) => appendCourseElement(course, true));
 };
 
-document.querySelector("#department-dropdown").onchange = function(
+document.querySelector("#department-dropdown").onchange = function (
     { target },
 ) {
     selectedDep = getDepartmentIdFromElement(target);
@@ -355,12 +385,16 @@ document.getElementById("copy-link").onclick = () => {
 
         Toastify({
             text: "複製好了！點此可直接前往",
+            style: {
+                background:
+                    "linear-gradient(147deg, #00d2ff 0%, #3a7bd5 74%)",
+            },
             destination: link,
             newWindow: true,
             close: true,
             duration: 3000,
         }).showToast();
-    } catch (err) {
+    } catch (_err) {
         console.log("Oops, unable to copy");
     }
 
@@ -375,11 +409,11 @@ document.getElementById("download-link").onclick = () => {
         table_element.classList.remove("btn-outline-light");
         table_element.classList.add("btn-outline-dark");
     });
-    setTimeout(function() {
-        let table = document.getElementById("main-table");
-        domtoimage.toPng(table)
-            .then(function(dataURL) {
-                var link = document.createElement("a");
+    setTimeout(function () {
+        const table = document.getElementById("main-table");
+        toPng(table)
+            .then(function (dataURL) {
+                const link = document.createElement("a");
                 link.href = dataURL;
                 link.download = YEAR + "-" + SEMESTER + "_timetable.png";
                 document.body.appendChild(link);
@@ -399,7 +433,10 @@ document.getElementById("clear-table").onclick = () => {
     if (courseDoms.length === 0) {
         Toastify({
             text: "您尚未選課，無法清空課表",
-            backgroundColor: "linear-gradient(147deg, #f71735 0%, #db3445 74%)",
+            style: {
+                background:
+                    "linear-gradient(147deg, #f71735 0%, #db3445 74%)",
+            },
             close: true,
             duration: 3000,
         }).showToast();
@@ -409,8 +446,10 @@ document.getElementById("clear-table").onclick = () => {
 
         Toastify({
             text: "已清空課表!",
-            // Use pastel blue color
-            backgroundColor: "linear-gradient(147deg, #00d2ff 0%, #3a7bd5 74%)",
+            style: {
+                background:
+                    "linear-gradient(147deg, #00d2ff 0%, #3a7bd5 74%)",
+            },
             close: true,
             duration: 3000,
         }).showToast();

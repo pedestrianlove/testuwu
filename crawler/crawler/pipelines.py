@@ -24,7 +24,7 @@ class CrawlerPipeline:
             college_name = self.data_obj[course_id]['college']
             department[department_id] = {
                 'name': department_name, 'college': college_name}
-        department_file = '../course-data/' + \
+        department_file = '../public/course-data/' + \
             str(semester['year']) + \
             str(semester['semester']) + '-dep-data.json'
         with open(department_file, 'w') as outfile:
@@ -32,7 +32,7 @@ class CrawlerPipeline:
                       indent=None, separators=(',', ':'))
 
         # Save the course data
-        course_file = '../course-data/' + \
+        course_file = '../public/course-data/' + \
             str(semester['year'])+str(semester['semester']) + '-data.json'
         processed_course = {}
         for course_id in self.data_obj:
