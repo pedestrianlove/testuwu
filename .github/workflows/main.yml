@@ -23,18 +23,18 @@ jobs:
         with:
           ref: standalone
 
-      # - uses: actions/setup-python@v5
-      #   with:
-      #     python-version: '3.10'
-      #
-      # - name: "Install crawler's dependencies"
-      #   run: |
-      #     pip install Scrapy
-      # 
-      # - name: "Execute the crawler"
-      #   working-directory: ./crawler
-      #   run: |
-      #     scrapy crawl courses
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: "Install crawler's dependencies"
+        run: |
+          pip install Scrapy
+      
+      - name: "Execute the crawler"
+        working-directory: ./crawler
+        run: |
+          scrapy crawl courses
 
       - uses: actions/setup-node@v4
         with:
