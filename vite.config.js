@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-    base: "https://cmlai-lab.github.io/THUwU/",
+    base: "https://pedestrianlove.github.io/testuwu/",
 });
