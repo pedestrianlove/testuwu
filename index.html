@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="light">
+
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TLS5CD51NC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'G-TLS5CD51NC');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THUwU | 東海選課模擬器</title>
+
+    <meta property="og:title" content="THUwU | 東海選課模擬器" />
+    <meta property="og:description" content="就，又一個東海選課模擬器" />
+    <meta property="og:image" content="img/logo.png" />
+    <meta property="og:url" content="https://pedestrianlove.github.io/THUwU/" />
+  <script type="module" crossorigin src="https://pedestrianlove.github.io/testuwu/assets/index-BtKBTKwg.js"></script>
+  <link rel="stylesheet" crossorigin href="https://pedestrianlove.github.io/testuwu/assets/index-GY1x3Kla.css">
+</head>
+
+<body>
+    <nav class="navbar is-light is-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="https://cmlai-lab.github.io/THUwU/">
+                    <img alt="東海大學" src="img/thu_logo.png">
+                    選課模擬器 / 排課系統
+                </a>
+                <a id="semester-tag" class="navbar-item" href="#" target="_blank" rel="noopener noreferrer"></a>
+            </div>
+        </div>
+    </nav>
+    <div class="container is-widescreen">
+        <div class="columns is-desktop">
+            <div class="column is-one-quarter-desktop sidebar">
+                <div class="field">
+                    <p class="control has-icons-left has-icons-right">
+                        <label for="department-dropdown"></label>
+                        <select id="department-dropdown" class="input">
+                            <option value="0" selected>全部系所</option>
+                        </select>
+                        <span class="icon is-small is-left">
+                            <i class="fas fa-caret-down"></i>
+                        </span>
+                    </p>
+                </div>
+                <div class="field">
+                    <p class="control has-icons-left has-icons-right">
+                        <input id="search-bar" class="input" type="text" placeholder="載入課程資料中" disabled>
+                        <span class="icon is-small is-left">
+                            <i class="fas fa-search"></i>
+                        </span>
+                    </p>
+                </div>
+                <div class="result course-panel course-list"></div>
+                <div class="course-panel">
+                    <span class="tag is-info credits">0 學分</span>
+                    <div class="selected course-list"></div>
+                </div>
+            </div>
+            <div class="column">
+                <div style="text-align: right; margin: 0.5em;">
+                    <button id="download-link" class="button is-small">
+                        <span class="icon is-small">
+                            <i class="fas fa-download"></i>
+                        </span>
+                        <span>下載課表(BETA)</span>
+                    </button>
+
+                    <button id="copy-link" class="button is-small">
+                        <span class="icon is-small">
+                            <i class="fas fa-share-square"></i>
+                        </span>
+                        <span>複製分享連結</span>
+                    </button>
+
+                    <button id="clear-table" class="button is-small">
+                        <span class="icon is-small">
+                            <i class="fas fa-trash"></i>
+                        </span>
+                        <span>清除課表</span>
+                    </button>
+
+                    <button id="import" class="button is-small is-hidden">
+                        <span class="icon is-small">
+                            <i class="fas fa-file-import"></i>
+                        </span>
+                        <span>匯入此課表</span>
+                    </button>
+                </div>
+                <div id="main-table" class="timetable">
+                    <div class="week-names">
+                        <div>Mon</div>
+                        <div>Tue</div>
+                        <div>Wed</div>
+                        <div>Thu</div>
+                        <div>Fri</div>
+                        <div>Sat</div>
+                        <div>Sun</div>
+                    </div>
+                    <div class="time-interval">
+                    </div>
+                    <div class="content">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer has-text-centered">
+        <p>Designed By @splitline</p>
+        <a href="https://github.com/splitline/NCTUwU" target="_blank">
+            <span class="icon">
+                <i class="fab fa-github"></i>
+            </span>
+        </a>
+    </footer>
+
+    <template id="courseTemplate">
+        <div class="course">
+            <p>
+                <span id="id-tag" class="tag is-primary is-rounded"></span>
+                <b class="modal-launcher" id="name"></b>
+                <span id="type-tag" class="tag"></span>
+            </p>
+            <p id="detail"></p>
+            <a class="toggle-course">
+                <span class="icon">
+                    <i class="toggle-icon fas fa-plus"></i>
+                </span>
+            </a>
+        </div>
+    </template>
+
+    <div class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-content">
+            <div class="card">
+                <header class="card-header">
+                    <p class="card-header-title"></p>
+                    <a href="#" class="card-header-icon">
+                        <span class="icon">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                        </span>
+                    </a>
+                </header>
+                <div class="card-content">
+                    <div class="content">
+                        <dl class="dl-horizontal">
+                            <dt>課號</dt>
+                            <dd></dd>
+                            <dt>開課系所</dt>
+                            <dd></dd>
+                            <dt>學分</dt>
+                            <dd></dd>
+                            <dt>教師</dt>
+                            <dd></dd>
+                            <dt>上課時間 / 教室</dt>
+                            <dd></dd>
+                            <dt>備註</dt>
+                            <dd></dd>
+                            <dt>課程概述</dt>
+                            <dd></dd>
+                            <dt>評分方式</dt>
+                            <dd>
+                                <table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth">
+                                    <thead>
+                                        <th>項目</th>
+                                        <th>配分</th>
+                                        <th>說明</th>
+                                    </thead>
+
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                <footer class="card-footer">
+                    <a href="#" target="_blank" id="outline" class="card-footer-item">課程綱要</a>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading is-hidden">
+        <span>
+            The fear of the Lord is the beginning of wisdom: and the knowledge of the holy is understanding.
+        </span>
+    </div>
+</body>
+
+</html>
