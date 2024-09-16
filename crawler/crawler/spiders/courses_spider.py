@@ -46,6 +46,12 @@ class CoursesSpider(scrapy.Spider):
                 }
             )
 
+        # Patch missing department in one of the crawling iterations:
+        # FIXME as soon as possible!
+        if response.meta['college'] == "文學院":
+            self.getCustomDepartment(response, "S47", "通識課程:永續實踐領域", "通識課程")
+            self.getCustomDepartment(response, "S48", "程式思維與生成式AI", "程式外語")
+
     def parse(self, response):
         target_table = response.xpath(
             "/html/body/div[1]/div[2]/div[2]/div[2]/div/table[2]/tbody")
@@ -126,3 +132,18 @@ class CoursesSpider(scrapy.Spider):
             data = json.load(f)
             return {'year': data["YEAR"], 'semester': data["SEMESTER"]}
         return {}
+
+    def getCustomDepartment(self, response, department_id, department_name, college_name):
+        # Patching missing departments
+        semester = self.getSemester()
+        yield response.follow(
+            "https://course.thu.edu.tw/view-dept/" + semester['year'] + "/" + semester['semester'] + "/" + department_id,
+            callback=self.parse,
+            meta={
+                'college': college_name,
+                'department': department_name.strip() if department_name is not None else "",
+                'department_id': department_id,
+            }
+        )
+
+
