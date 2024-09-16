@@ -4,6 +4,7 @@ import scrapy
 
 class CoursesSpider(scrapy.Spider):
     name = "courses"
+    patched = False
 
     def start_requests(self):
         semester = self.getSemester()
@@ -48,9 +49,26 @@ class CoursesSpider(scrapy.Spider):
 
         # Patch missing department in one of the crawling iterations:
         # FIXME as soon as possible!
-        if response.meta['college'] == "文學院":
-            self.getCustomDepartment(response, "S47", "通識課程:永續實踐領域", "通識課程")
-            self.getCustomDepartment(response, "S48", "程式思維與生成式AI", "程式外語")
+        if not self.patched:
+            yield response.follow(
+                url=self.getCustomDepartmentUrl("S47"),
+                callback=self.parse,
+                meta={
+                    'college': "通識課程",
+                    'department': "通識課程:永續實踐領域",
+                    'department_id': "S47",
+                }
+            )
+            yield response.follow(
+                url=self.getCustomDepartmentUrl("S48"),
+                callback=self.parse,
+                meta={
+                    'college': "程式外語",
+                    'department': "程式思維與生成式AI",
+                    'department_id': "S48",
+                }
+            )
+            self.patched = True
 
     def parse(self, response):
         target_table = response.xpath(
@@ -133,17 +151,10 @@ class CoursesSpider(scrapy.Spider):
             return {'year': data["YEAR"], 'semester': data["SEMESTER"]}
         return {}
 
-    def getCustomDepartment(self, response, department_id, department_name, college_name):
-        # Patching missing departments
+    def getCustomDepartmentUrl(self, department_id):
+        print("Patching missing departments")
         semester = self.getSemester()
-        yield response.follow(
-            "https://course.thu.edu.tw/view-dept/" + semester['year'] + "/" + semester['semester'] + "/" + department_id,
-            callback=self.parse,
-            meta={
-                'college': college_name,
-                'department': department_name.strip() if department_name is not None else "",
-                'department_id': department_id,
-            }
-        )
-
-
+        return "https://course.thu.edu.tw/view-dept/" + \
+            semester['year'] + "/" + \
+            semester['semester'] + "/" + \
+            department_id
