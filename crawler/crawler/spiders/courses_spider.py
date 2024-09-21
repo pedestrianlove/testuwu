@@ -4,6 +4,7 @@ import scrapy
 
 class CoursesSpider(scrapy.Spider):
     name = "courses"
+    patched = False
 
     def start_requests(self):
         semester = self.getSemester()
@@ -45,6 +46,29 @@ class CoursesSpider(scrapy.Spider):
                     'department_id': url.strip().split('/')[-1] if url is not None else "",
                 }
             )
+
+        # Patch missing department in one of the crawling iterations:
+        # FIXME as soon as possible!
+        if not self.patched:
+            yield response.follow(
+                url=self.getCustomDepartmentUrl("S47"),
+                callback=self.parse,
+                meta={
+                    'college': "通識課程",
+                    'department': "通識課程:永續實踐領域",
+                    'department_id': "S47",
+                }
+            )
+            yield response.follow(
+                url=self.getCustomDepartmentUrl("S48"),
+                callback=self.parse,
+                meta={
+                    'college': "程式外語",
+                    'department': "程式思維與生成式AI",
+                    'department_id': "S48",
+                }
+            )
+            self.patched = True
 
     def parse(self, response):
         target_table = response.xpath(
@@ -126,3 +150,11 @@ class CoursesSpider(scrapy.Spider):
             data = json.load(f)
             return {'year': data["YEAR"], 'semester': data["SEMESTER"]}
         return {}
+
+    def getCustomDepartmentUrl(self, department_id):
+        print("Patching missing departments")
+        semester = self.getSemester()
+        return "https://course.thu.edu.tw/view-dept/" + \
+            semester['year'] + "/" + \
+            semester['semester'] + "/" + \
+            department_id
