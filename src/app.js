@@ -3,18 +3,20 @@ import { toPng } from "dom-to-image";
 import "../style.css";
 
 import {
+    CRAWLED,
     APP_URL,
-    SEMESTER,
     TIME_IDX,
     TIME_MAPPING,
     WEEK_MAPPING,
-    YEAR,
 } from "./config.js";
 
 let courseData = {};
 let depData = {};
 let selectedCourse = {};
 let selectedDep = "0";
+const semesterList = document.getElementById("semester-tag");
+let SEMESTER = CRAWLED[semesterList.value].SEMESTER;
+let YEAR = CRAWLED[semesterList.value].YEAR;
 
 // Safari sucks.
 
@@ -87,56 +89,84 @@ TIME_IDX.forEach((period) => {
     }
 });
 
+function purgeCourse() {
+    const selectedDom =
+        document.getElementsByClassName("selected course-list")[0];
+    const courseDoms = selectedDom.getElementsByClassName(
+        "toggle-course is-selected",
+    );
+
+    let defaultLength = courseDoms.length;
+
+    let cnt = courseDoms.length;
+    while (cnt-- > 0) courseDoms[0].click();
+
+    return defaultLength;
+}
+
 // Fetch department data and render department list
-fetch(`course-data/${YEAR}${SEMESTER}-dep-data.json`)
-    .then((r) => r.json())
-    .then((data) => {
-        depData = data;
-        const groupedDepartments = Object.entries(depData).reduce(
-            (acc, [key, value]) => {
-                const groupKey = value.college; // or any other attribute you want to group by
-                if (!acc[groupKey]) {
-                    acc[groupKey] = [];
-                }
-                acc[groupKey].push({ key, value });
-                return acc;
-            },
-            {},
-        );
-        Object.keys(groupedDepartments).forEach((college) => {
-            const optGroup = document.createElement("optgroup");
-            optGroup.label = college;
-            groupedDepartments[college].forEach((dep) => {
-                const option = new Option(dep.value.name, dep.key);
-                optGroup.appendChild(option);
-            });
-            document.querySelector("#department-dropdown").appendChild(
-                optGroup,
+function bootstrapData(event = null) {
+    // reset the state before fetching anything.
+    if (event) {
+        purgeCourse(); // purge selected course
+        const departmentList = document.querySelector("#department-dropdown");
+        departmentList.value = 0;
+        departmentList.dispatchEvent(new Event('change'));
+    }
+    SEMESTER = CRAWLED[semesterList.value].SEMESTER;
+    YEAR = CRAWLED[semesterList.value].YEAR;
+    fetch(`course-data/${YEAR}${SEMESTER}-dep-data.json`)
+        .then((r) => r.json())
+        .then((data) => {
+            depData = data;
+            const groupedDepartments = Object.entries(depData).reduce(
+                (acc, [key, value]) => {
+                    const groupKey = value.college; // or any other attribute you want to group by
+                    if (!acc[groupKey]) {
+                        acc[groupKey] = [];
+                    }
+                    acc[groupKey].push({ key, value });
+                    return acc;
+                },
+                {},
             );
+            Object.keys(groupedDepartments).forEach((college) => {
+                const optGroup = document.createElement("optgroup");
+                optGroup.label = college;
+                groupedDepartments[college].forEach((dep) => {
+                    const option = new Option(dep.value.name, dep.key);
+                    optGroup.appendChild(option);
+                });
+                document.querySelector("#department-dropdown").appendChild(
+                    optGroup,
+                );
+            });
         });
-    });
 
-// Fetch course data.
-fetch(`course-data/${YEAR}${SEMESTER}-data.json`)
-    .then((r) => r.json())
-    .then((data) => {
-        courseData = data;
-        selectedCourse = share ? loadFromShareLink() : loadFromLocalStorage();
+    // Fetch course data.
+    fetch(`course-data/${YEAR}${SEMESTER}-data.json`)
+        .then((r) => r.json())
+        .then((data) => {
+            courseData = data;
+            selectedCourse = share ? loadFromShareLink() : loadFromLocalStorage();
 
-        document.querySelector("#search-bar").disabled = false;
-        document.querySelector("#search-bar").placeholder =
-            "課號 / 課名 / 老師 / 備註";
-        document.querySelector(".loading").classList.add("is-hidden");
-        for (const courseId in selectedCourse) {
-            const course = courseData[courseId];
-            if (course.time !== "無資料") {
-                renderPeriodBlock(course);
+            document.querySelector("#search-bar").disabled = false;
+            document.querySelector("#search-bar").placeholder =
+                "課號 / 課名 / 老師 / 備註";
+            document.querySelector(".loading").classList.add("is-hidden");
+            for (const courseId in selectedCourse) {
+                const course = courseData[courseId];
+                if (course.time !== "無資料") {
+                    renderPeriodBlock(course);
+                }
+                appendCourseElement(course);
             }
-            appendCourseElement(course);
-        }
-        document.querySelector(".credits").textContent =
-            `${totalCredits()} 學分`;
-    });
+            document.querySelector(".credits").textContent =
+                `${totalCredits()} 學分`;
+        });
+}
+bootstrapData();
+semesterList.onchange = bootstrapData;
 
 function getCourseIdFromElement(element) {
     return element.closest(".course,.period").dataset.id;
@@ -438,13 +468,9 @@ document.getElementById("download-link").onclick = () => {
 };
 
 document.getElementById("clear-table").onclick = () => {
-    const selectedDom =
-        document.getElementsByClassName("selected course-list")[0];
-    const courseDoms = selectedDom.getElementsByClassName(
-        "toggle-course is-selected",
-    );
+    const originalLength = purgeCourse();
 
-    if (courseDoms.length === 0) {
+    if (originalLength === 0) {
         Toastify({
             text: "您尚未選課，無法清空課表",
             style: {
@@ -455,9 +481,6 @@ document.getElementById("clear-table").onclick = () => {
             duration: 3000,
         }).showToast();
     } else {
-        let cnt = courseDoms.length;
-        while (cnt-- > 0) courseDoms[0].click();
-
         Toastify({
             text: "已清空課表!",
             style: {

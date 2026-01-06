@@ -1,9 +1,14 @@
-import { SEMESTER, YEAR } from "../semesterConfig.json" with { type: "json" };
+import { crawled as CRAWLED } from "../semesterList.json" with { type: "json" };
 
-document.getElementById("semester-tag").innerHTML =
-	`${YEAR} 學年度 第 ${SEMESTER} 學期`;
-document.getElementById("semester-tag").href =
-	`https://course.thu.edu.tw/view-dept/${YEAR}/${SEMESTER}`;
+const semesterList = document.getElementById("semester-tag");
+CRAWLED.forEach((semester, index) => {
+	const semesterOption = new Option(`${semester.YEAR} 學年度 第 ${semester.SEMESTER} 學期`, index, false, false);
+	if (index == 0) {
+		semesterOption.selected = true;
+		semesterOption.defaultSelected = true;
+	}
+	semesterList.appendChild(semesterOption);
+});
 
 const TIME_MAPPING = {
 	"A": "7:10 ~ 8:00",
@@ -58,4 +63,4 @@ const WEEK_MAPPING = {
 
 const APP_URL = `${location.protocol}//${location.host}${location.pathname}`;
 
-export { APP_URL, SEMESTER, TIME_IDX, TIME_MAPPING, WEEK_MAPPING, YEAR };
+export { APP_URL, CRAWLED, TIME_IDX, TIME_MAPPING, WEEK_MAPPING };
